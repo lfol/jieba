@@ -35,7 +35,7 @@ DICT_WRITING = {}
 pool = None
 
 re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z]+)?$', re.U)
-
+re_reLine=re.compile('^(.*)=(.*)$')
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
 
 # \u4E00-\u9FD5a-zA-Z0-9+#&\._ : All non-space characters. Will be handled with re_han
@@ -58,6 +58,7 @@ class Tokenizer(object):
         else:
             self.dictionary = _get_abs_path(dictionary)
         self.FREQ = {}
+        self.re_dict={}
         self.total = 0
         self.user_word_tag_tab = {}
         self.initialized = False
@@ -175,19 +176,38 @@ class Tokenizer(object):
             route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
                               logtotal + route[x + 1][0], x) for x in DAG[idx])
 
+    def get_re_DAG(self,sentence):
+        reDAG={}
+        for key in self.re_dict.keys():
+            for reExp in self.re_dict[key]:
+                for ma in reExp.finditer(sentence):
+                    start=ma.span()[0]
+                    end=ma.span()[1]-1
+                    if start in reDAG.keys():
+                        if end not in reDAG[start]:
+                            reDAG[start].append(end)
+                    else:
+                        reDAG[start]=[end]
+        return reDAG
+
     def get_DAG(self, sentence):
         self.check_initialized()
         DAG = {}
         N = len(sentence)
+        reDAG = self.get_re_DAG(sentence)
+
         for k in xrange(N):
-            tmplist = []
-            i = k
-            frag = sentence[k]
-            while i < N and frag in self.FREQ:
-                if self.FREQ[frag]:
-                    tmplist.append(i)
-                i += 1
-                frag = sentence[k:i + 1]
+            if k in reDAG.keys():
+                tmplist=reDAG[k]
+            else:
+                tmplist = []
+                i = k
+                frag = sentence[k]
+                while i < N and frag in self.FREQ:
+                    if self.FREQ[frag]:
+                        tmplist.append(i)
+                    i += 1
+                    frag = sentence[k:i + 1]
             if not tmplist:
                 tmplist.append(k)
             DAG[k] = tmplist
@@ -391,6 +411,45 @@ class Tokenizer(object):
                 tag = tag.strip()
             self.add_word(word, freq, tag)
 
+    def load_userRe(self, f):
+        '''
+        Load personalized regular expression to improve detect rate.
+
+        Parameter:
+            - f : A plain text file contains words and their ocurrences.
+                  Can be a file-like object, or the path of the dictionary file,
+                  whose encoding must be utf-8.
+
+        Structure of dict file:
+        ReName=exp
+        
+        ReNames can be repeated.They will convert to a list.
+        DO NOT SUPPORT '=' IN exp!
+        '''
+        self.check_initialized()
+        if isinstance(f, string_types):
+            f_name = f
+            f = open(f, 'rb')
+        else:
+            f_name = resolve_filename(f)
+        for lineno, ln in enumerate(f, 1):
+            line = ln.strip()
+            if not isinstance(line, text_type):
+                try:
+                    line = line.decode('utf-8').lstrip('\ufeff')
+                except UnicodeDecodeError:
+                    raise ValueError('dictionary file %s must be utf-8' % f_name)
+            if not line:
+                continue
+            reLine = re_reLine.match(line)
+            if reLine is not None:
+                reName, reExp = reLine.groups()
+                if reName in self.re_dict.keys():
+                    self.re_dict[reName].append(re.compile(reExp))
+                else:
+                    self.re_dict[reName] = [re.compile(reExp)]
+
+
     def add_word(self, word, freq=None, tag=None):
         """
         Add a word to dictionary.
@@ -509,6 +568,7 @@ get_DAG = dt.get_DAG
 get_dict_file = dt.get_dict_file
 initialize = dt.initialize
 load_userdict = dt.load_userdict
+load_userRe=dt.load_userRe
 set_dictionary = dt.set_dictionary
 suggest_freq = dt.suggest_freq
 tokenize = dt.tokenize
