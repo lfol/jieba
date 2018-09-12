@@ -1,3 +1,4 @@
+#encoding=utf-8
 from __future__ import absolute_import, unicode_literals
 import os
 import re
@@ -14,7 +15,7 @@ CHAR_STATE_TAB_P = "char_state_tab.p"
 
 re_han_detail = re.compile("([\u4E00-\u9FD5]+)")
 re_skip_detail = re.compile("([\.0-9]+|[a-zA-Z0-9]+)")
-re_han_internal = re.compile("([\u4E00-\u9FD5a-zA-Z0-9+#&\._]+)")
+re_han_internal = re.compile("([\u4E00-\u9FD5a-zA-Z0-9+#&/／\._\-%~～]+)")
 re_skip_internal = re.compile("(\r\n|\s)")
 
 re_eng = re.compile("[a-zA-Z0-9]+")
@@ -118,7 +119,6 @@ class POSTokenizer(object):
         prob, pos_list = viterbi(
             sentence, char_state_tab_P, start_P, trans_P, emit_P)
         begin, nexti = 0, 0
-
         for i, char in enumerate(sentence):
             pos = pos_list[i][0]
             if pos == 'B':
@@ -136,8 +136,11 @@ class POSTokenizer(object):
         blocks = re_han_detail.split(sentence)
         for blk in blocks:
             if re_han_detail.match(blk):
-                for word in self.__cut(blk):
-                    yield word
+                if len(blk)>1:
+                    for word in self.__cut(blk):
+                        yield word
+                else:
+                    yield pair(blk, self.word_tag_tab.get(blk, 'x'))
             else:
                 tmp = re_skip_detail.split(blk)
                 for x in tmp:
@@ -163,7 +166,7 @@ class POSTokenizer(object):
             for key in self.re_dict.keys():
                 for reExp in self.re_dict[key]:
                     if reExp.match(l_word):
-                        yield pair(l_word, key)
+                        yield pair(reExp.match(l_word).group(), key)
                         isRe=True
             if not isRe:
                 if re_eng1.match(l_word):
@@ -181,9 +184,7 @@ class POSTokenizer(object):
     def __cut_DAG(self, sentence):
         DAG = self.tokenizer.get_DAG(sentence)
         route = {}
-
         self.tokenizer.calc(sentence, DAG, route)
-
         x = 0
         buf = ''
         N = len(sentence)
@@ -194,7 +195,7 @@ class POSTokenizer(object):
             for key in self.re_dict.keys():
                 for reExp in self.re_dict[key]:
                     if reExp.match(l_word):
-                        yield pair(l_word, key)
+                        yield pair(reExp.match(l_word).group(), key)
                         isRe = True
             if not isRe:
                 if y - x == 1:
@@ -215,6 +216,7 @@ class POSTokenizer(object):
             x = y
 
         if buf:
+
             if len(buf) == 1:
                 yield pair(buf, self.word_tag_tab.get(buf, 'x'))
             elif not self.tokenizer.FREQ.get(buf):
