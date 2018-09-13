@@ -14,7 +14,7 @@ for allDir in pathDir:
     child = os.path.join('%s%s' % (filepath, allDir))
     jieba.load_userdict(child)
 jieba.load_userdict('userdict.txt')
-s='''出租实验高中附近单层美瓦2500方方14元 三相有大变压路好行集装车。10月好用直接'''
+s='''B02623出租：花园恒安路。三楼390平方，一平方13元。电梯门房500元'''
 seg_list = jieba.cut(s, cut_all=False,HMM=False)
 print( "/ ".join(seg_list))
 
