@@ -38,6 +38,7 @@ pool = None
 re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z]+)?$', re.U)
 re_reLine=re.compile('(?!#)^(.*)=(.*)$')
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
+re_num = re.compile("[\.0-9]+")
 
 # \u4E00-\u9FD5a-zA-Z0-9+#&\._ : All non-space characters. Will be handled with re_han
 # \r\n|\s : whitespace characters. Will not be handled.
@@ -529,6 +530,12 @@ class Tokenizer(object):
         else:
             for w in self.cut(unicode_sentence, HMM=HMM):
                 width = len(w)
+                for n in re_num.finditer(w):
+                    if n.end()-n.start()>=2:
+                        for x in range(n.start(),n.end()-1):
+                            for y in range(x+2,n.end()+1):
+                                yield (w[x:y],start+x,start+y)
+
                 if len(w) > 2:
                     for i in xrange(len(w) - 1):
                         gram2 = w[i:i + 2]

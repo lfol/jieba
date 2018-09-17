@@ -3,21 +3,34 @@ from __future__ import print_function,unicode_literals
 import sys
 sys.path.append("../")
 import jieba
-
+import os
+import re
+jieba.load_userRe('userRe.txt')
+filepath='./location/'
+pathDir = os.listdir(filepath)
+for allDir in pathDir:
+    child = os.path.join('%s%s' % (filepath, allDir))
+    jieba.load_userdict(child)
+jieba.load_userdict('userdict.txt')
 g_mode="default"
+re_num = re.compile("[\.0-9]+")
 
 def cuttest(test_sent):
     global g_mode
+    for n in  re_num.finditer(test_sent):
+        print (n.start(),n.end(),n.group())
     result = jieba.tokenize(test_sent,mode=g_mode)
     for tk in result:
         print("word %s\t\t start: %d \t\t end:%d" % (tk[0],tk[1],tk[2]))
 
 
+
+
 if __name__ == "__main__":
     for m in ("default","search"):
         g_mode = m
-        cuttest("这是一个伸手不见五指的黑夜。我叫孙悟空，我爱北京，我爱Python和C++。")
-        cuttest("我不喜欢日本和服。")
+        cuttest("出售：金煌时代8幢 1502 132.84方 原价约8000元／方 加价6.8万 直接")
+        '''cuttest("我不喜欢日本和服。")
         cuttest("雷猴回归人间。")
         cuttest("工信处女干事每月经过下属科室都要亲口交代24口交换机等技术性器件的安装工作")
         cuttest("我需要廉租房")
@@ -104,3 +117,4 @@ if __name__ == "__main__":
         cuttest('张三风同学走上了不归路')
         cuttest('阿Q腰间挂着BB机手里拿着大哥大，说：我一般吃饭不AA制的。')
         cuttest('在1号店能买到小S和大S八卦的书。')
+'''
