@@ -34,11 +34,14 @@ default_logger.addHandler(log_console)
 DICT_WRITING = {}
 
 pool = None
-
-re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z]+)?$', re.U)
-re_reLine=re.compile('(?!#)^(.*)=(.*)$')
+#word, freq, tag ,sameword
+re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z]+)?( [^ ]+?)?$', re.U)
+#re_name=re_exp # weight
+re_reLine=re.compile('(?!#)^(.*)=(.*?)(?: #)?([\d]+)?$')
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
-re_num = re.compile("[\.0-9]+")
+minToken=2
+maxToken=8
+#re_num = re.compile("[\.0-9]+")
 
 # \u4E00-\u9FD5a-zA-Z0-9+#&\._ : All non-space characters. Will be handled with re_han
 # \r\n|\s : whitespace characters. Will not be handled.
@@ -60,7 +63,9 @@ class Tokenizer(object):
         else:
             self.dictionary = _get_abs_path(dictionary)
         self.FREQ = {}
+        self.same_word_dict={}
         self.re_dict={}
+        self.re_weight_dict={}
         self.total = 0
         self.user_word_tag_tab = {}
         self.initialized = False
@@ -406,12 +411,14 @@ class Tokenizer(object):
             if not line:
                 continue
             # match won't be None because there's at least one character
-            word, freq, tag = re_userdict.match(line).groups()
+            word, freq, tag ,same = re_userdict.match(line).groups()
             if freq is not None:
                 freq = freq.strip()
             if tag is not None:
                 tag = tag.strip()
-            self.add_word(word, freq, tag)
+            if same is not None:
+                same = same.strip()
+            self.add_word(word, freq, tag, same)
 
     def load_userRe(self, f):
         '''
@@ -429,11 +436,13 @@ class Tokenizer(object):
         DO NOT SUPPORT '=' IN exp!
         '''
         self.check_initialized()
+        replaceDict = {}
         if isinstance(f, string_types):
             f_name = f
             f = open(f, 'rb')
         else:
             f_name = resolve_filename(f)
+
         for lineno, ln in enumerate(f, 1):
             line = ln.strip()
             if not isinstance(line, text_type):
@@ -445,14 +454,20 @@ class Tokenizer(object):
                 continue
             reLine = re_reLine.match(line)
             if reLine is not None:
-                reName, reExp = reLine.groups()
-                if reName in self.re_dict.keys():
-                    self.re_dict[reName].append(re.compile(reExp))
+                reName, reExp ,reWeigth = reLine.groups()
+                if reName[0]=='@' and reName[-1]=='@':
+                    replaceDict[reName]=reExp
                 else:
-                    self.re_dict[reName] = [re.compile(reExp)]
+                    for k,v in replaceDict.items():
+                        reExp=reExp.replace(k,v)
+                    if reName in self.re_dict.keys():
+                        self.re_dict[reName].append(re.compile(reExp))
+                    else:
+                        self.re_dict[reName] = [re.compile(reExp)]
+                    self.re_weight_dict[reName]=reWeigth
         # print self.re_dict
 
-    def add_word(self, word, freq=None, tag=None):
+    def add_word(self, word, freq=None, tag=None, same=None):
         """
         Add a word to dictionary.
 
@@ -466,6 +481,8 @@ class Tokenizer(object):
         self.total += freq
         if tag:
             self.user_word_tag_tab[word] = tag
+        if same:
+            self.same_word_dict[word]=same
         for ch in xrange(len(word)):
             wfrag = word[:ch + 1]
             if wfrag not in self.FREQ:
@@ -530,6 +547,12 @@ class Tokenizer(object):
         else:
             for w in self.cut(unicode_sentence, HMM=HMM):
                 width = len(w)
+                # cut all char for search
+                for x in range(0, width+1-minToken):
+                    for y in range(x + minToken, width + 1):
+                        yield (w[x:y], start + x, start + y)
+                '''
+                #cut all num for search 
                 for n in re_num.finditer(w):
                     if n.end()-n.start()>=2:
                         for x in range(n.start(),n.end()-1):
@@ -546,6 +569,7 @@ class Tokenizer(object):
                         gram3 = w[i:i + 3]
                         if self.FREQ.get(gram3):
                             yield (gram3, start + i, start + i + 3)
+                '''
                 yield (w, start, start + width)
                 start += width
 
@@ -582,6 +606,9 @@ suggest_freq = dt.suggest_freq
 tokenize = dt.tokenize
 user_word_tag_tab = dt.user_word_tag_tab
 
+re_dict=dt.re_dict
+re_weight_dict=dt.re_weight_dict
+same_word_dict=dt.same_word_dict
 
 def _lcut_all(s):
     return dt._lcut_all(s)

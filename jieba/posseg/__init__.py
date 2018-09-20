@@ -165,8 +165,9 @@ class POSTokenizer(object):
             isRe=False
             for key in self.re_dict.keys():
                 for reExp in self.re_dict[key]:
-                    if reExp.match(l_word):
-                        yield pair(reExp.match(l_word).group(), key)
+                    reMatch= reExp.match(l_word)
+                    if reMatch:
+                        yield pair(reMatch.group(), key)
                         isRe=True
             if not isRe:
                 if re_eng1.match(l_word):
