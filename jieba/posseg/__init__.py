@@ -262,8 +262,8 @@ class POSTokenizer(object):
         return list(self.__cut_internal(sentence, False))
 
     def cut(self, sentence, HMM=True):
-        for w in self.__cut_internal(sentence, HMM=HMM):
-            yield w
+        for w,t in self.__cut_internal(sentence, HMM=HMM):
+            yield self.tokenizer.get_same_word(w),t
 
     def lcut(self, *args, **kwargs):
         return list(self.cut(*args, **kwargs))

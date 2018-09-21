@@ -220,6 +220,9 @@ class Tokenizer(object):
             DAG[k] = tmplist
         return DAG
 
+    def get_same_word(self,word):
+        return same_word_dict.get(word,word)
+
     def __cut_all(self, sentence):
         dag = self.get_DAG(sentence)
         old_j = -1
@@ -326,17 +329,17 @@ class Tokenizer(object):
                 continue
             if re_han.match(blk):
                 for word in cut_block(blk):
-                    yield word
+                    yield self.get_same_word(word)
             else:
                 tmp = re_skip.split(blk)
                 for x in tmp:
                     if re_skip.match(x):
-                        yield x
+                        yield self.get_same_word(x)
                     elif not cut_all:
                         for xx in x:
-                            yield xx
+                            yield self.get_same_word(xx)
                     else:
-                        yield x
+                        yield self.get_same_word(x)
 
     def cut_for_search(self, sentence, HMM=True):
         """
