@@ -604,6 +604,7 @@ get_dict_file = dt.get_dict_file
 initialize = dt.initialize
 load_userdict = dt.load_userdict
 load_userRe=dt.load_userRe
+get_same_word=dt.get_same_word
 set_dictionary = dt.set_dictionary
 suggest_freq = dt.suggest_freq
 tokenize = dt.tokenize
