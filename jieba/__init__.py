@@ -63,9 +63,12 @@ class Tokenizer(object):
         else:
             self.dictionary = _get_abs_path(dictionary)
         self.FREQ = {}
+
         self.same_word_dict={}
+
         self.re_dict={}
         self.re_weight_dict={}
+
         self.total = 0
         self.user_word_tag_tab = {}
         self.initialized = False
@@ -183,38 +186,32 @@ class Tokenizer(object):
             route[idx] = max((log(self.FREQ.get(sentence[idx:x + 1]) or 1) -
                               logtotal + route[x + 1][0], x) for x in DAG[idx])
 
-    def get_re_DAG(self,sentence):
-        reDAG={}
+
+    # add regularExp word to userword
+    def check_reExp_word(self,sentence):
         for key in self.re_dict.keys():
             for reExp in self.re_dict[key]:
                 for ma in reExp.finditer(sentence):
-                    start=ma.span()[0]
-                    end=ma.span()[1]-1
-                    if start in reDAG.keys():
-                        if end not in reDAG[start]:
-                            reDAG[start].append(end)
-                    else:
-                        reDAG[start]=[end]
-        return reDAG
+                    word=ma.group()
+                    if not (word in self.FREQ.keys() and  word in self.user_word_tag_tab.keys()):
+                        self.add_word(word,freq=re_weight_dict[key],tag=key)
+
 
     def get_DAG(self, sentence):
         self.check_initialized()
+        self.check_reExp_word(sentence)
         DAG = {}
         N = len(sentence)
-        reDAG = self.get_re_DAG(sentence)
 
         for k in xrange(N):
-            if k in reDAG.keys():
-                tmplist=reDAG[k]
-            else:
-                tmplist = []
-                i = k
-                frag = sentence[k]
-                while i < N and frag in self.FREQ:
-                    if self.FREQ[frag]:
-                        tmplist.append(i)
-                    i += 1
-                    frag = sentence[k:i + 1]
+            tmplist = []
+            i = k
+            frag = sentence[k]
+            while i < N and frag in self.FREQ:
+                if self.FREQ[frag]:
+                    tmplist.append(i)
+                i += 1
+                frag = sentence[k:i + 1]
             if not tmplist:
                 tmplist.append(k)
             DAG[k] = tmplist
@@ -467,7 +464,7 @@ class Tokenizer(object):
                         self.re_dict[reName].append(re.compile(reExp))
                     else:
                         self.re_dict[reName] = [re.compile(reExp)]
-                    self.re_weight_dict[reName]=reWeigth
+                    self.re_weight_dict[reName]=reWeigth if reWeigth is not None else 100
         # print self.re_dict
 
     def add_word(self, word, freq=None, tag=None, same=None):
@@ -593,7 +590,7 @@ dt = Tokenizer()
 
 get_FREQ = lambda k, d=None: dt.FREQ.get(k, d)
 add_word = dt.add_word
-calc = dt.calc
+#calc = dt.calc
 cut = dt.cut
 lcut = dt.lcut
 cut_for_search = dt.cut_for_search

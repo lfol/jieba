@@ -162,21 +162,21 @@ class POSTokenizer(object):
         while x < N:
             y = route[x][1] + 1
             l_word = sentence[x:y]
-            isRe=False
-            for key in self.re_dict.keys():
-                for reExp in self.re_dict[key]:
-                    reMatch= reExp.match(l_word)
-                    if reMatch:
-                        yield pair(reMatch.group(), key)
-                        isRe=True
-            if not isRe:
-                if re_eng1.match(l_word):
-                    buf += l_word
-                else:
-                    if buf:
-                        yield pair(buf, 'eng')
-                        buf = ''
-                    yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
+            #isRe=False
+            #for key in self.re_dict.keys():
+            #    for reExp in self.re_dict[key]:
+            #        reMatch= reExp.match(l_word)
+            #        if reMatch:
+            #            yield pair(reMatch.group(), key)
+            #            isRe=True
+            #if not isRe:
+            if re_eng1.match(l_word):
+                buf += l_word
+            else:
+                if buf:
+                    yield pair(buf, 'eng')
+                    buf = ''
+                yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
             x = y
         if buf:
             yield pair(buf, 'eng')
@@ -192,28 +192,28 @@ class POSTokenizer(object):
         while x < N:
             y = route[x][1] + 1
             l_word = sentence[x:y]
-            isRe = False
-            for key in self.re_dict.keys():
-                for reExp in self.re_dict[key]:
-                    if reExp.match(l_word):
-                        yield pair(reExp.match(l_word).group(), key)
-                        isRe = True
-            if not isRe:
-                if y - x == 1:
-                    buf += l_word
-                else:
-                    if buf:
-                        if len(buf) == 1:
-                            yield pair(buf, self.word_tag_tab.get(buf, 'x'))
-                        elif not self.tokenizer.FREQ.get(buf):
-                            recognized = self.__cut_detail(buf)
-                            for t in recognized:
-                                yield t
-                        else:
-                            for elem in buf:
-                                yield pair(elem, self.word_tag_tab.get(elem, 'x'))
-                        buf = ''
-                    yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
+            #isRe = False
+            #for key in self.re_dict.keys():
+            #    for reExp in self.re_dict[key]:
+            #        if reExp.match(l_word):
+            #            yield pair(reExp.match(l_word).group(), key)
+            #            isRe = True
+            #if not isRe:
+            if y - x == 1:
+                buf += l_word
+            else:
+                if buf:
+                    if len(buf) == 1:
+                        yield pair(buf, self.word_tag_tab.get(buf, 'x'))
+                    elif not self.tokenizer.FREQ.get(buf):
+                        recognized = self.__cut_detail(buf)
+                        for t in recognized:
+                            yield t
+                    else:
+                        for elem in buf:
+                            yield pair(elem, self.word_tag_tab.get(elem, 'x'))
+                    buf = ''
+                yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
             x = y
 
         if buf:
