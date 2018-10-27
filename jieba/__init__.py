@@ -71,6 +71,7 @@ class Tokenizer(object):
 
         self.total = 0
         self.user_word_tag_tab = {}
+        self.user_word_tag_tab_total={}
         self.initialized = False
         self.tmp_dir = None
         self.cache_file = None
@@ -193,7 +194,7 @@ class Tokenizer(object):
             for reExp in self.re_dict[key]:
                 for ma in reExp.finditer(sentence):
                     word=ma.group()
-                    if not (word in self.FREQ.keys() and  word in self.user_word_tag_tab.keys()):
+                    if not (word in self.FREQ.keys() and  word in self.user_word_tag_tab_total.keys()):
                         self.add_word(word,freq=re_weight_dict[key],tag=key)
 
 
@@ -481,6 +482,7 @@ class Tokenizer(object):
         self.total += freq
         if tag:
             self.user_word_tag_tab[word] = tag
+            self.user_word_tag_tab_total[word]=tag
         if same:
             self.same_word_dict[word]=same
         for ch in xrange(len(word)):

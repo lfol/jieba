@@ -154,6 +154,7 @@ class POSTokenizer(object):
 
     def __cut_DAG_NO_HMM(self, sentence):
         DAG = self.tokenizer.get_DAG(sentence)
+        self.makesure_userdict_loaded()
         route = {}
         self.tokenizer.calc(sentence, DAG, route)
         x = 0
@@ -184,6 +185,7 @@ class POSTokenizer(object):
 
     def __cut_DAG(self, sentence):
         DAG = self.tokenizer.get_DAG(sentence)
+        self.makesure_userdict_loaded()
         route = {}
         self.tokenizer.calc(sentence, DAG, route)
         x = 0
