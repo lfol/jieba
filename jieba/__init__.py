@@ -35,7 +35,7 @@ DICT_WRITING = {}
 
 pool = None
 #word, freq, tag ,sameword
-re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z]+)?( [^ ]+?)?$', re.U)
+re_userdict = re.compile('^(.+?)( [0-9]+)?( [a-z.]+)?( [^ ]+?)?$', re.U)
 #re_name=re_exp # weight
 re_reLine=re.compile('(?!#)^(.*)=(.*?)(?: #)?([\d]+)?$')
 re_eng = re.compile('[a-zA-Z0-9]', re.U)
