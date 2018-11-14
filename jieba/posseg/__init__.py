@@ -313,3 +313,10 @@ def cut(sentence, HMM=True):
 
 def lcut(sentence, HMM=True):
     return list(cut(sentence, HMM))
+
+
+def get_tag_words(tag):
+    def get_key(dict, value):
+        return [k for k, v in dict.items() if v == value]
+
+    return get_key(dt.word_tag_tab, tag)
