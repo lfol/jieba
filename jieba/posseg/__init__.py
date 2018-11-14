@@ -177,6 +177,7 @@ class POSTokenizer(object):
                 if buf:
                     yield pair(buf, 'eng')
                     buf = ''
+                l_word=self.tokenizer.get_same_word(l_word)
                 yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
             x = y
         if buf:
@@ -215,6 +216,7 @@ class POSTokenizer(object):
                         for elem in buf:
                             yield pair(elem, self.word_tag_tab.get(elem, 'x'))
                     buf = ''
+                l_word = self.tokenizer.get_same_word(l_word)
                 yield pair(l_word, self.word_tag_tab.get(l_word, 'x'))
             x = y
 
@@ -265,7 +267,7 @@ class POSTokenizer(object):
 
     def cut(self, sentence, HMM=True):
         for w,t in self.__cut_internal(sentence, HMM=HMM):
-            yield self.tokenizer.get_same_word(w),t
+            yield w,t
 
     def lcut(self, *args, **kwargs):
         return list(self.cut(*args, **kwargs))
