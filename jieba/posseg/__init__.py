@@ -272,6 +272,12 @@ class POSTokenizer(object):
     def lcut(self, *args, **kwargs):
         return list(self.cut(*args, **kwargs))
 
+    def get_tag_words(self,tag):
+        def get_key(dict, value):
+            return [k for k, v in dict.items() if v == value]
+        self.makesure_userdict_loaded()
+        return get_key(self.word_tag_tab, tag)
+
 # default Tokenizer instance
 
 dt = POSTokenizer(jieba.dt)
@@ -316,7 +322,5 @@ def lcut(sentence, HMM=True):
 
 
 def get_tag_words(tag):
-    def get_key(dict, value):
-        return [k for k, v in dict.items() if v == value]
-
-    return get_key(dt.word_tag_tab, tag)
+    global dt
+    return dt.get_tag_words(tag)
